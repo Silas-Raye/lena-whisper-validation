@@ -1,0 +1,14 @@
+# Per-user files. Each person who clones the repo creates their own.
+my_commands.txt
+logs/
+runs/
+__pycache__/
+# The Python environment, if setup.sh made one here
+whisper-env/
+# Research data never goes in the repository
+*.wav
+*.its
+*.xlsx
+sample.csv
+legacy_reference.csv
+packages/

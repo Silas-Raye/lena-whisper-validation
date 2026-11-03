@@ -1,0 +1,2 @@
+# The scripts run on ACCRE (Linux), where Windows line endings break them.
+* text=auto eol=lf

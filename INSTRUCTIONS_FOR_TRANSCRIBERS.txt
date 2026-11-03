@@ -1,0 +1,94 @@
+HOW TO TRANSCRIBE THESE RECORDINGS
+==================================
+
+This folder has:
+
+  audio/V001.wav, ...      5-minute stretches of home audio from LENA recorders
+  templates/V001.csv, ...  one table per recording, for you to fill in
+
+You're writing down every word spoken in each recording, from scratch. There
+is no computer transcript to correct, on purpose: we'll use your transcripts
+to measure how accurate the computer transcripts are.
+
+
+WHAT TO DO
+----------
+
+1. Open the recording in a player that shows the time, such as Audacity
+   or VLC, and its template in Excel or another spreadsheet.
+
+2. Each row of the template is one stretch of the recording (a "span"),
+   from "start" to "end" (minutes:seconds). The rows cover the whole
+   recording with no gaps. Listen to each span, replaying as often as you
+   need. Headphones help a lot.
+
+3. Fill in these columns for EVERY row:
+
+   status   speech   you heard at least one word
+            none     no words at all (silence, noise, crying, babbling)
+            unclear  someone is talking, but you can't make out any word
+
+   speech   every word said by a person in the room: adults and children
+
+   media    every word from a TV, radio, phone, video, or talking toy
+
+   notes    anything else (optional)
+
+4. Don't add, delete, or reorder rows.
+
+5. Save the file as CSV (in Excel: File > Save As > "CSV UTF-8"), with
+   your initials added to the name: V001_AB.csv. Put finished files in
+   the "returned" folder next to this one.
+
+
+THE LENA HINT
+-------------
+
+The lena_hint column says what the LENA software thinks is in that span,
+for example "LENA heard: woman 3.2s" or "LENA: no speech". It's a guess and
+is often wrong in both directions. Use it as a heads-up about where to listen
+closely, and never as a reason to skip listening: every row needs a status,
+including rows where LENA heard nothing.
+
+
+HOW TO WRITE WHAT YOU HEAR
+--------------------------
+
+- Write exactly what was said, including false starts, repeats, and
+  mistakes ("we we went to the- to the store"). Don't fix grammar.
+
+- A word that starts in one span and ends in the next goes in the span
+  where it started.
+
+- A word you can't make out: write xxx in its place, one xxx for each
+  stretch you can't make out ("can you get the xxx from the kitchen").
+  Don't guess from context. If you can't make out any word in the span,
+  set status to unclear instead.
+
+- Fillers and short responses: write them as heard (um, uh, mm-hmm,
+  uh-oh, shh).
+
+- Babbling, crying, laughing, coughing, and singing without words: don't
+  write them as words. If you want to note them, put them in square
+  brackets: [babble], [cry], [laugh]. Anything in square brackets is
+  ignored when we score.
+
+- A child's word counts only when you can recognize a real word ("mama",
+  "ball", "uh-oh"). Babble that only sounds word-like is [babble].
+
+- Names: write them as you hear them.
+
+- Spell normally and write numbers as words ("two", not "2"). Don't
+  write speaker labels like "Mom:" in the text.
+
+- Don't use any transcription service, captioning tool, or AI tool, and
+  don't look at other people's transcripts of the same recording. Some
+  recordings go to two people on purpose, to check how often people agree.
+
+
+QUESTIONS
+---------
+
+If something comes up that these instructions don't cover, write it in the
+notes column, do what seems most sensible, and ask your supervisor so that
+everyone handles it the same way.
