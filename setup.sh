@@ -123,18 +123,22 @@ My commands (${USER})
 =====================================================================
 
 Run each step on ACCRE unless it says otherwise. The README explains each.
+Every step works on the package named in config.sh (PACKAGE_NAME, now
+${PACKAGE_NAME}).
 
 
-1. On YOUR computer: write sample.csv, the list of clips
+1. Copy the children's recordings and .its files to ACCRE with the main
+   pipeline: put their IDs in ~/lena-whisper/participant_ids.txt, then
 
-       python tools/make_validation_sample.py "<validationSample folder>" sample.csv
+       bash ~/lena-whisper/print_wav_commands.sh
+       bash ~/lena-whisper/print_its_commands.sh
+
+   and run the printed commands on YOUR computer.
 
 
-2. Copy sample.csv, the clips, and their .its files to ACCRE
+2. Choose the clips
 
-       bash ${SHOW_DIR}/print_input_commands.sh
-
-   Run it again after sample.csv is on ACCRE to get the .its commands.
+       bash ${SHOW_DIR}/make_sample.sh <ID> [<ID> ...]
 
 
 3. Build the package for the transcription team

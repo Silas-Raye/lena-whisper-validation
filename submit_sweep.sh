@@ -88,7 +88,7 @@ if [ -n "$SLURM_QOS" ]; then
     sbatch_args+=(--qos="$SLURM_QOS")
 fi
 
-job_id=$(sbatch --parsable "${sbatch_args[@]}" run_sweep.sh "${LV_DIR}/${snapshot}")
+job_id=$(sbatch --parsable "${sbatch_args[@]}" run_sweep.sh "${LV_DIR}/${snapshot}" "$PACKAGE_DIR")
 job_id="${job_id%%;*}"
 echo
 echo "[✓] Submitted job ${job_id} with ${n_queued} task(s)."

@@ -9,24 +9,37 @@
 # /nobackup is large, fast, and NOT backed up. Originals stay on the lab server.
 DATA_ROOT="${LV_DATA_ROOT:-/nobackup/userspace/${USER}}"
 VAL_ROOT="${DATA_ROOT}/lena_validation"
-# The list of clips to transcribe (README step 1).
-SAMPLE_CSV="${VAL_ROOT}/sample.csv"
+# One package per batch of clips sent to the transcription team. Every script
+# works on this one; to work on another, change the name here or start the
+# command with LV_PACKAGE=<name>, as in: LV_PACKAGE=legacy_2026 bash status.sh
+# The team sees the name, so keep it neutral (no ages or IDs).
+PACKAGE_NAME="${LV_PACKAGE:-batch1}"
+PACKAGE_DIR="${VAL_ROOT}/packages/${PACKAGE_NAME}"
+# The package's list of clips: make_sample.sh writes it (README step 2).
+SAMPLE_CSV="${PACKAGE_DIR}/sample.csv"
 # Clips that are already cut, named <clip_id>.wav.
 CLIPS_IN="${VAL_ROOT}/clips_in"
 # Full recordings and .its files: the main pipeline's folders, so files you
-# copied for it are used here too. A clip missing from CLIPS_IN is cut from its
-# recording in RAW_DIR.
+# copy with its print_wav_commands.sh and print_its_commands.sh are used here.
+# A clip missing from CLIPS_IN is cut from its recording in RAW_DIR.
 RAW_DIR="${DATA_ROOT}/rawAudio"
 ITS_DIR="${LV_ITS_DIR:-${DATA_ROOT}/itsFiles}"
-# The main pipeline's .its lookup table, used when sample.csv doesn't name a
-# clip's .its file. Optional.
+# The main pipeline's .its lookup table, which names each recording's .its file.
 LOOKUP_TABLE="${HOME}/lena-whisper/its_identifier_file_babies_crb.csv"
-# One package per batch of clips sent to the transcription team. To start a
-# new batch, change the name (and SAMPLE_CSV's contents).
-PACKAGE_NAME="${LV_PACKAGE:-validation_2026}"
-PACKAGE_DIR="${VAL_ROOT}/packages/${PACKAGE_NAME}"
+# The age whose recordings to use: the main pipeline's TIMEPOINT, so that
+# print_wav_commands.sh copies the same recordings make_sample.sh looks for.
+TIMEPOINT="$(sed -n 's/^TIMEPOINT="\(.*\)".*/\1/p' "${HOME}/lena-whisper/config.sh" 2>/dev/null | head -n 1)"
+TIMEPOINT="${TIMEPOINT:-6-mo}"
 # Whisper models other than the main pipeline's large-v2.
 MODEL_DIR="${DATA_ROOT}/whisper-models"
+
+# ---- Choosing clips from full recordings (make_sample.sh) ------------------------
+# Per child: 5-minute blocks with adult speech, split over the child's low,
+# medium, and high thirds of LENA's adult word count, and blocks with no adult
+# words, to measure how much Whisper makes up when nobody talks. 12 per child
+# is an hour of audio per child to transcribe.
+SPEECH_CLIPS="10"
+QUIET_CLIPS="2"
 
 # ---- The templates ----------------------------------------------------------------
 # Spans follow LENA's segments: one span per stretch where LENA heard speech,

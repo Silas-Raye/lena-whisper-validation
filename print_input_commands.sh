@@ -1,6 +1,7 @@
 #!/bin/bash
-# print_input_commands.sh — print the commands that copy sample.csv, the clips,
-# and the clips' .its files to ACCRE.
+# print_input_commands.sh — print the commands that copy a package's inputs to
+# ACCRE when its clips are already cut (such as the 2026 validation sample):
+# sample.csv, the clips, and the clips' .its files.
 #
 # Usage (on the ACCRE gateway):
 #   bash ~/lena-whisper-validation/print_input_commands.sh
@@ -8,6 +9,9 @@
 # Then paste the commands into a terminal on YOUR computer, connected to the
 # VPN and the lab server. The .its commands need sample.csv on ACCRE, so run
 # this again after copying it.
+#
+# For clips chosen from children's full recordings, you don't need this:
+# copy the recordings with the main pipeline and run make_sample.sh.
 
 set -euo pipefail
 # shellcheck source=lib.sh
@@ -15,11 +19,16 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 host="${USER}@login.accre.vu"
 win_its="${SERVER_WIN}\\${SERVER_ITS//\//\\}"
+mkdir -p "$PACKAGE_DIR" "$CLIPS_IN"   # so the scp commands have somewhere to go
 
 cat <<EOF
 
-Copy the inputs to ACCRE
+Copy ready-cut clips to ACCRE (package ${PACKAGE_NAME})
 =====================================================================
+
+For clips from children's full recordings, skip this: put the IDs in
+~/lena-whisper/participant_ids.txt, run ~/lena-whisper/print_wav_commands.sh
+and print_its_commands.sh, then bash ${SHOW_DIR}/make_sample.sh <IDs>.
 
 Run these on YOUR computer, not on ACCRE. Each scp asks for your VUNetID
 password. Replace the <...> parts with the folders on your computer.
@@ -27,13 +36,11 @@ password. Replace the <...> parts with the folders on your computer.
 
 1. sample.csv (tools/make_validation_sample.py writes it)
 
-   scp "<folder>/sample.csv" ${host}:${VAL_ROOT}/
+   scp "<folder>/sample.csv" ${host}:${PACKAGE_DIR}/
 
 
-2. The clips, if they're already cut: the whole folder, in one go (for the
-   2026 validation sample, the validation_chunks folder in Dylan's
-   validationSample folder). Clips that aren't here are cut from full
-   recordings in ${RAW_DIR}.
+2. The clips: the whole folder, in one go (for the 2026 validation sample,
+   the validation_chunks folder in Dylan's validationSample folder).
 
    scp -r "<folder>" ${host}:${CLIPS_IN}/
 

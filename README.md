@@ -2,32 +2,32 @@
 
 These scripts measure how accurate Whisper's transcripts of LENA recordings
 are, and find the Whisper model and settings that make them most accurate.
-For a sample of 5-minute clips they:
+For a set of children, they:
 
-1. Build a package for the transcription team: the clips, and a template
+1. Choose 5-minute clips from the children's recordings: some with lots of
+   adult speech, some with little, some with none, across the day.
+2. Build a package for the transcription team: the clips, and a template
    for each one to fill in from scratch. There's no Whisper transcript in
    it, so it can't bias the transcribers.
-2. Keep apart what the team mustn't see: which recording each clip comes
+3. Keep apart what the team mustn't see: which recording each clip comes
    from, LENA's data, and Whisper's transcripts.
-3. Transcribe the clips on ACCRE's GPUs with several models and settings:
+4. Transcribe the clips on ACCRE's GPUs with several models and settings:
    what the main pipeline runs today (`large-v2`), other settings, and
    cheaper models (`turbo`, `small.en`, `medium.en`).
-4. Score every run against the human transcripts: word error rate (WER),
+5. Score every run against the human transcripts: word error rate (WER),
    speed, and how much speech Whisper makes up or misses.
 
 It works alongside the main pipeline,
 [lena-whisper](https://github.com/Silas-Raye/lena-whisper): it reads
-recordings and .its files from the same folders and, if the main pipeline
-is set up, uses its Python environment.
+recordings and .its files from the same folders, its lookup table, and its
+`TIMEPOINT`, and, if the main pipeline is set up, uses its Python environment.
 
 ## Before you start
 
 You need what the main pipeline needs: an ACCRE account in the lab's group
 (`l3_humphreys_lab_iacc` for GPU jobs), access to the lab server through the
-GlobalProtect VPN, and a terminal. You also need the clips, either already
-cut (for the 2026 validation sample, the `validation_chunks` folder in
-Dylan's `validationSample` folder) or as full recordings in your `rawAudio`
-folder on ACCRE.
+GlobalProtect VPN, and a terminal. Set up the main pipeline first
+(`~/lena-whisper`); you copy recordings with it.
 
 ## Set up (once)
 
@@ -51,42 +51,49 @@ folder on ACCRE.
 
 Setup checks your GPU account, creates your folders in
 `/nobackup/userspace/<VUNetID>/lena_validation/`, adds Silero VAD to the
-Python environment (it uses the main pipeline's if you have it, which saves
-about 5 GB; otherwise it installs Whisper here), downloads the models in the
-plans in `config.sh`, and writes `~/lena-whisper-validation/my_commands.txt`.
-You can run it again at any time.
+Python environment (the main pipeline's, which saves about 5 GB), downloads
+the models in the plans in `config.sh`, and writes
+`~/lena-whisper-validation/my_commands.txt`. You can run it again at any time.
 
 ## Run it
 
-1. **On your computer, write `sample.csv`**, the list of clips. For the 2026
-   validation sample:
+1. **Copy the children's recordings and .its files to ACCRE**, with the main
+   pipeline. Put their IDs in `~/lena-whisper/participant_ids.txt`, one per
+   line, then run:
 
    ```bash
-   python tools/make_validation_sample.py "<path to>/validationSample" sample.csv
+   bash ~/lena-whisper/print_wav_commands.sh
+   bash ~/lena-whisper/print_its_commands.sh
    ```
 
-   It needs only Python 3.9 or newer. For another sample, write `sample.csv`
-   yourself: one row per clip, with `clip_id`, `recording_id` (for example
-   `1017_029796`), `start_sec` (where the clip starts in the recording),
-   and optionally `duration_sec` (300 if empty) and `its_file`. Other
-   columns, such as age or AWC level, are carried along, and the report
-   breaks WER down by them.
+   and run the printed commands on your computer. They copy the recordings
+   at the main pipeline's `TIMEPOINT` (now `6-mo`).
 
-2. **Copy `sample.csv`, the clips, and their .its files to ACCRE.** On
-   ACCRE, run:
+   Two things to keep in mind:
+   - If you don't want the main pipeline to transcribe these children's
+     whole days too (about 8 GPU jobs per recording), take the IDs out of
+     `participant_ids.txt` once they're copied.
+   - Don't run the main pipeline's `cleanup.sh` for them until step 3 is
+     done: it deletes their recordings.
+
+2. **Choose the clips:**
 
    ```bash
-   bash ~/lena-whisper-validation/print_input_commands.sh
+   bash ~/lena-whisper-validation/make_sample.sh 1253 1254 1256 1269 1270
    ```
 
-   It prints the copy commands; run them on your computer. Run it again
-   after `sample.csv` is on ACCRE to get the commands for the .its files.
+   For each child it picks 12 LENA 5-minute blocks (see
+   [How clips are chosen](#how-clips-are-chosen)) and lists them in the
+   package's `sample.csv`. To add children later, run it again with their
+   IDs; the clips already chosen stay.
 
 3. **Build the package:**
 
    ```bash
    bash ~/lena-whisper-validation/make_package.sh
    ```
+
+   It cuts each clip from its recording and writes the templates.
 
 4. **Give the package to the transcription team.** This prints the commands
    that copy the team's part to the lab server, and later bring the
@@ -122,13 +129,46 @@ You can run it again at any time.
 
    The report is in `analyst_only/reports/<date_time>/report.md`.
 
-### How long the runs take
+### How long it takes
 
-From the main pipeline's speed, a `large-v2` run on 96 clips takes about 2
-GPU-hours, or four to five 30-minute jobs. `turbo` and `small.en` take a
-fraction of that, and the report gives each run's measured speed. Round 1 is
-12 runs. If the lab gets a `batch_gpu` account, change the GPU settings in
-`config.sh` as it describes, and each run finishes in one job.
+Five children at 12 clips each are 60 clips: 5 hours of audio to
+transcribe, plus 9 clips a second time.
+
+From the main pipeline's speed, a `large-v2` run on 60 clips takes a little
+over an hour of GPU time, or about three 30-minute jobs. `turbo` and
+`small.en` take a fraction of that, and the report gives each run's measured
+speed. Round 1 is 12 runs. If the lab gets a `batch_gpu` account, change
+the GPU settings in `config.sh` as it describes, and each run finishes in
+one job.
+
+### Keep the team blind
+
+The team should never see a Whisper transcript of these recordings:
+
+- Only copy `for_transcribers/` to the lab server.
+- If the main pipeline transcribes these children too, don't copy those
+  results (`copy_results_to_lab_server.sh`) anywhere the team can open them
+  until they're done.
+
+## How clips are chosen
+
+`make_sample.sh` reads each recording's .its file and picks LENA 5-minute
+blocks:
+
+- Only whole blocks that start between 6:00 and 22:00 local time, and never
+  two neighboring blocks of the same recording.
+- `SPEECH_CLIPS` (10) blocks with adult words, split evenly over the
+  child's own lowest, middle, and highest thirds of LENA's adult word
+  count, and spread over the days and times of day.
+- `QUIET_CLIPS` (2) blocks with no adult words, to measure how much Whisper
+  makes up when nobody is talking. Most of a day-long recording is like
+  this.
+
+The choice is random but repeatable. The clips line up with the main
+pipeline's chunks, which follow the same blocks, and are named
+`<recording>_block<number>`, the number being the block's `lena_block` in
+the main pipeline's combined CSV. `sample.csv` records each clip's AWC,
+third, and time of day, and the report breaks WER down by them and by child.
 
 ## What you get
 
@@ -137,9 +177,10 @@ Everything for a package is in
 
 | Folder | Contents |
 |---|---|
+| `sample.csv` | The clips, from `make_sample.sh`. |
 | `for_transcribers/` | **For the team.** `INSTRUCTIONS.txt`, `audio/V001.wav` ..., `templates/V001.csv` ... |
 | `analyst_only/` | **Never share.** Everything below. |
-| `analyst_only/key.csv` | Which recording and start time each clip is, with `sample.csv`'s other columns. |
+| `analyst_only/key.csv` | Which recording and block each clip is, with `sample.csv`'s other columns. |
 | `analyst_only/double_transcribe.csv` | The clips to give to two transcribers. |
 | `analyst_only/whisper/<model>__<setting>/` | Each run's transcripts: `V001.json` (Whisper's full output, with timing) and `V001.csv` (laid out on the template's rows, to read next to the human transcript). |
 | `analyst_only/lena/`, `analyst_only/spans/` | LENA's segments in each clip, and each template row's LENA numbers. |
@@ -147,7 +188,7 @@ Everything for a package is in
 | `analyst_only/reports/` | `score.sh`'s reports. |
 
 Clips are renamed `V001`, `V002`, ... in shuffled order, so a clip's name
-says nothing about whose recording it is or the child's age.
+says nothing about whose recording it is.
 
 ### The template
 
@@ -167,6 +208,17 @@ gaps:
 `INSTRUCTIONS.txt` gives the transcription conventions: `xxx` for a word
 that can't be made out, `[babble]` and other bracketed notes for sounds that
 aren't words, and so on.
+
+## Packages
+
+Every script works on the package named `PACKAGE_NAME` in `config.sh`
+(`batch1`). The team sees the name, so keep it neutral. To work on another
+package, change the name, or start each command with `LV_PACKAGE=<name>`:
+
+```bash
+LV_PACKAGE=batch2 bash ~/lena-whisper-validation/make_sample.sh 1301 1302
+LV_PACKAGE=batch2 bash ~/lena-whisper-validation/make_package.sh
+```
 
 ## How LENA is used
 
@@ -210,9 +262,9 @@ any setting.
 The plans in `config.sh` (`SWEEP_PLAN`, `SWEEP_PLAN_MORE`) say which models
 run with which settings. Round 1 runs the four main settings with
 `large-v2`, `turbo` (large-v3-turbo: a much smaller decoder, several times
-faster), and `small.en` (a sixth the size of large-v2). Round 2 tries the
-silence threshold, the gates, and `medium.en`. Edit round 2 to follow up on
-what round 1 shows.
+faster), and `small.en` (about a sixth the size of large-v2). Round 2 tries
+the silence threshold, the gates, and `medium.en`. Edit round 2 to follow up
+on what round 1 shows.
 
 ## Reading the report
 
@@ -236,35 +288,59 @@ what round 1 shows.
   and later copies of a repeated segment), `lenacheck`, and both. They need
   no GPU time, and the main pipeline could apply the winner to its
   transcripts afterwards.
+- **By group.** WER by child, AWC third, and time of day, for the baseline
+  and the best run. With 12 clips per child, read these as a check for big
+  gaps, not as estimates.
 
-## Provisional scores from the 2026 corrections
+## The 2026 validation sample (optional)
 
-Before the new transcripts come back, you can score the runs against the
-corrections the team made in 2026. They were made by editing Whisper's
-output, so they favor runs that resemble it; use them for a first look only.
+The 96 clips cut in 2026 already have corrections, made by editing
+Whisper's output. Those corrections favor runs that resemble Whisper's
+output, so scores against them are provisional, but you can get them before
+the new transcripts come back. Use a separate package for these clips:
 
-1. On your computer, with `pip install pandas openpyxl`:
+1. On your computer, write their `sample.csv` (Python 3.9 or newer) and the
+   corrections as a reference (needs `pip install pandas openpyxl`):
 
    ```bash
+   python tools/make_validation_sample.py "<path to>/validationSample" sample.csv
    python tools/make_legacy_reference.py "<path to>/validationSample" legacy_reference.csv
    ```
 
-2. Copy `legacy_reference.csv` to `/nobackup/userspace/<VUNetID>/lena_validation/`
-   on ACCRE, and run:
+2. On ACCRE, print the commands that copy `sample.csv`, the clips, and their
+   .its files, and run them on your computer:
 
    ```bash
-   bash ~/lena-whisper-validation/score.sh --legacy /nobackup/userspace/<VUNetID>/lena_validation/legacy_reference.csv
+   LV_PACKAGE=legacy_2026 bash ~/lena-whisper-validation/print_input_commands.sh
    ```
 
-The report also scores "original": the transcripts the team corrected.
+   Run it again after `sample.csv` is on ACCRE to get the .its commands.
+   Copy `legacy_reference.csv` to `/nobackup/userspace/<VUNetID>/lena_validation/`.
+
+3. Build, transcribe, and score as above, with `LV_PACKAGE=legacy_2026`
+   before each command, and the reference for scoring:
+
+   ```bash
+   LV_PACKAGE=legacy_2026 bash ~/lena-whisper-validation/make_package.sh
+   LV_PACKAGE=legacy_2026 bash ~/lena-whisper-validation/submit_sweep.sh
+   LV_PACKAGE=legacy_2026 bash ~/lena-whisper-validation/score.sh \
+       --legacy /nobackup/userspace/<VUNetID>/lena_validation/legacy_reference.csv
+   ```
+
+The report also scores "original": the transcripts the team corrected. Don't
+send this package to the team: they have heard these clips and seen
+Whisper's transcripts of them.
 
 ## Troubleshooting
 
 | What you see | Fix |
 |---|---|
 | `Invalid account or account/partition combination` | Ask the lab to have ACCRE add you to `l3_humphreys_lab_iacc`. |
-| `make_package.sh` says a clip has no audio | Copy its `.wav` to `clips_in`, named `<clip_id>.wav`, or its full recording to `rawAudio`. |
-| `no LENA data` for a clip | Its .its file isn't in `itsFiles` (`print_input_commands.sh` prints the copy commands). The clip gets 15-second spans with no hints; the LENA gates transcribe all of it. Delete its template and rerun `make_package.sh` after copying the .its file. |
+| `make_sample.sh` says a child has no recordings | Copy them (step 1). Their files must be named `<ID>_<recorder>.wav` in `rawAudio`, as the main pipeline copies them. |
+| `make_sample.sh` says `not a 6-mo recording` | The lookup table lists that recorder at another age; it's left out. To use another age, change `TIMEPOINT` in the main pipeline's `config.sh`. |
+| `no usable .its file` | Copy the .its files (step 1, `print_its_commands.sh`). |
+| `only N of the 12 blocks asked for fit the rules` | The recordings are short or quiet. The package has fewer clips for that child; nothing else to do. |
+| `make_package.sh` says a clip has no audio | Its recording isn't in `rawAudio` anymore (the main pipeline's `cleanup.sh` deletes them). Copy it again. |
 | A log ends with `CANCELLED ... DUE TO TIME LIMIT` | Expected. Run `submit_sweep.sh` again. |
 | `score.sh` skips a file: `has N rows, but the template has M` | The transcriber added or deleted rows. Fix the file, keeping one row per span. |
 | `score.sh` compares fewer runs than you expect | Runs under 90% done are listed at the end of the report as not compared yet. |
@@ -274,17 +350,18 @@ The report also scores "original": the transcripts the team corrected.
 
 | File | Purpose |
 |---|---|
-| `config.sh`, `lib.sh` | Settings, including the sweep plans, and shared shell helpers. |
+| `config.sh`, `lib.sh` | Settings, including the clip counts and sweep plans, and shared shell helpers. |
 | `setup.sh` | One-time setup for each user. |
-| `print_input_commands.sh`, `print_package_commands.sh` | Print the copy commands. |
+| `make_sample.sh`, `make_sample.py` | Choose clips from full recordings. |
 | `make_package.sh`, `make_package.py` | Build the package. |
+| `print_package_commands.sh`, `print_input_commands.sh` | Print the copy commands: the package to the lab server and back; ready-cut clips to ACCRE. |
 | `submit_sweep.sh`, `run_sweep.sh`, `sweep.py` | Transcribe the clips with each run, on GPUs. |
 | `status.sh` | Show progress. |
 | `score.sh`, `score.py` | Score the runs and write the report. |
 | `common.py` | Spans, file formats, text normalization, and WER. |
 | `its.py` | Reads .its files; copied from the main pipeline's `combineTranscripts.py`, so fix bugs in both. |
 | `INSTRUCTIONS_FOR_TRANSCRIBERS.txt` | Copied into each package. |
-| `tools/` | Run on your own computer: `sample.csv` for the 2026 sample, and the 2026 corrections as a reference. |
+| `tools/` | For the 2026 sample, run on your own computer: its `sample.csv`, and its corrections as a reference. |
 
 Text is normalized for scoring with Whisper's English normalizer, the
 standard one for reporting Whisper's WER. It ignores capitals, punctuation,

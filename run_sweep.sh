@@ -13,6 +13,8 @@ LIST="${1:?This script is submitted by submit_sweep.sh; run that instead.}"
 # The job starts in the folder it was submitted from: the repo folder.
 # shellcheck source=lib.sh
 source "${SLURM_SUBMIT_DIR}/lib.sh"
+# The package the job was submitted for, even if config.sh changed since.
+PACKAGE_DIR="${2:-$PACKAGE_DIR}"
 load_python
 
 read -r MODEL CONFIG <<< "$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$LIST")"
@@ -23,6 +25,7 @@ fi
 
 echo "=============================="
 echo "Run:          ${MODEL}__${CONFIG}"
+echo "Package:      ${PACKAGE_DIR}"
 echo "Array task:   ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}"
 echo "Node:         ${SLURMD_NODENAME:-unknown}"
 echo "Time limit:   ${SLURM_TIME}"
