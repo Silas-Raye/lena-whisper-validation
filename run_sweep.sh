@@ -32,6 +32,12 @@ echo "Time limit:   ${SLURM_TIME}"
 echo "Start time:   $(date)"
 echo "=============================="
 
+# What's on the GPU before we start: if another process holds its memory,
+# the log shows whose it is.
+echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-unset}"
+nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv 2>/dev/null || true
+nvidia-smi --query-compute-apps=pid,used_memory --format=csv 2>/dev/null || true
+
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-1}"
 # -u writes output immediately, so the log keeps its last lines if SLURM
 # stops the job at the time limit.

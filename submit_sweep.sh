@@ -61,17 +61,16 @@ if [ "$n_queued" -eq 0 ]; then
     exit 0
 fi
 
+# A second submission would run the same clips twice, so wait for the queue
+# to empty instead.
 n_existing=$( { squeue --me -h -n whisper_sweep -r 2>/dev/null || true; } | wc -l)
 if [ "$n_existing" -gt 0 ]; then
+    rm -f "$snapshot"
     echo
-    echo "[!] You already have ${n_existing} sweep task(s) queued or running."
-    echo "    New tasks for the same runs continue where those stop."
-    read -r -p "    Submit another round anyway? [y/N] " answer || answer=""
-    if [[ ! "$answer" =~ ^[Yy] ]]; then
-        rm -f "$snapshot"
-        echo "    Not submitted."
-        exit 0
-    fi
+    echo "[X] You already have ${n_existing} sweep task(s) queued or running. Run this"
+    echo "    again when they're done (bash ${SHOW_DIR}/status.sh), or cancel them"
+    echo "    first: scancel --name=whisper_sweep"
+    exit 1
 fi
 
 sbatch_args=(

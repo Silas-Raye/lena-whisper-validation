@@ -158,6 +158,29 @@ def spans_csv(res, template_rows):
             for i, r in enumerate(template_rows)]
 
 
+# GPU memory each model needs, in GB, with room for decoding.
+NEEDS_GB = {"large": 7.0, "turbo": 4.5, "medium": 4.0, "small": 2.0, "base": 1.0, "tiny": 1.0}
+
+
+def pick_gpu(torch, model):
+    """The visible GPU with the most free memory, as "cuda:<n>". Stops with a
+    message (and no traceback) if none has room for the model: on the shared
+    interactive_gpu nodes, another job's process can hold the GPU SLURM gave us."""
+    need = next((gb for k, gb in NEEDS_GB.items() if model.startswith(k)), 7.0)
+    free = []
+    for i in range(torch.cuda.device_count()):
+        f, total = torch.cuda.mem_get_info(i)
+        free.append((f / 1e9, i, total / 1e9))
+        say(f"    GPU {i} ({torch.cuda.get_device_name(i)}): {f / 1e9:.1f} of {total / 1e9:.1f} GB free")
+    best_free, best, _ = max(free)
+    if best_free < need:
+        say(f"[X] No GPU on this node has the {need:.0f} GB {model} needs: another process is "
+            "using it (see nvidia-smi above). Nothing was lost; run submit_sweep.sh again "
+            "later, and tell ACCRE support if it keeps happening on the same node.")
+        sys.exit(3)
+    return f"cuda:{best}"
+
+
 def main():
     ap = argparse.ArgumentParser(description="Transcribe a package's clips with one run.")
     ap.add_argument("--package", required=True)
@@ -199,7 +222,9 @@ def main():
     opts = {**BASE, **CONFIGS[a.config], "fp16": device == "cuda"}
     opts = {k: v for k, v in opts.items() if v is not None}
     gate = opts.pop("gate", None)
-    gpu = torch.cuda.get_device_name(0) if device == "cuda" else "cpu"
+    if device == "cuda":
+        device = pick_gpu(torch, a.model)
+    gpu = torch.cuda.get_device_name(device) if device.startswith("cuda") else "cpu"
     t_load = time.time()
     model = whisper.load_model(a.model, device=device, download_root=model_root(a.model, a.model_dir))
     say(f"[✓] {a.model} loaded on {gpu} in {time.time() - t_load:.0f} s")
