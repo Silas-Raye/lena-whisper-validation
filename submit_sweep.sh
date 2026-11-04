@@ -86,6 +86,9 @@ sbatch_args=(
 if [ -n "$SLURM_QOS" ]; then
     sbatch_args+=(--qos="$SLURM_QOS")
 fi
+if [ -n "${SLURM_EXCLUDE:-}" ]; then
+    sbatch_args+=(--exclude="$SLURM_EXCLUDE")
+fi
 
 job_id=$(sbatch --parsable "${sbatch_args[@]}" run_sweep.sh "${LV_DIR}/${snapshot}" "$PACKAGE_DIR")
 job_id="${job_id%%;*}"

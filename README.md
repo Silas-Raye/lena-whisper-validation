@@ -342,7 +342,8 @@ Whisper's transcripts of them.
 | `only N of the 12 blocks asked for fit the rules` | The recordings are short or quiet. The package has fewer clips for that child; nothing else to do. |
 | `make_package.sh` says a clip has no audio | Its recording isn't in `rawAudio` anymore (the main pipeline's `cleanup.sh` deletes them). Copy it again. |
 | A log ends with `CANCELLED ... DUE TO TIME LIMIT` | Expected. Run `submit_sweep.sh` again. |
-| A log says `No GPU on this node has the ... GB` (or `CUDA out of memory` near the top) | Another process held the GPU the job was given; the `nvidia-smi` lines at the top of the log show it. Nothing was lost: run `submit_sweep.sh` again when the queue is empty. |
+| Jobs stay `PENDING` for hours with `(ReqNodeNotAvail...)` | `SLURM_EXCLUDE` in `config.sh` keeps jobs off nodes whose GPU was found occupied; if those are the only nodes free, empty it and try again. |
+| A log says `No GPU on this node has the ... GB` (or `CUDA out of memory` near the top) | Another process held the GPU the job was given; the `nvidia-smi` lines at the top of the log show it. Nothing was lost. Add the node (from the log's `Node:` line) to `SLURM_EXCLUDE` in `config.sh`, tell ACCRE support, and run `submit_sweep.sh` again. |
 | `submit_sweep.sh` says you already have sweep tasks queued | Wait for them to finish, or cancel them with `scancel --name=whisper_sweep`, then submit again. Two rounds at once would transcribe the same clips twice. |
 | `score.sh` skips a file: `has N rows, but the template has M` | The transcriber added or deleted rows. Fix the file, keeping one row per span. |
 | `score.sh` compares fewer runs than you expect | Runs under 90% done are listed at the end of the report as not compared yet. |

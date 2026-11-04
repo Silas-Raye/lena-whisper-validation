@@ -117,3 +117,7 @@ SLURM_TIME="00:30:00"
 SLURM_CPUS="2"
 SLURM_MEM="16G"
 MAX_PARALLEL="10"   # most array tasks running at once
+# GPU nodes to keep jobs off, comma-separated. On 2026-11-04 every job sent to
+# gpu0058 found its GPU already full (another user's process holding 15 of
+# 16 GB). Empty this when ACCRE has fixed it.
+SLURM_EXCLUDE="gpu0058"
