@@ -96,6 +96,7 @@ echo
 echo "[✓] Submitted job ${job_id} with ${n_queued} task(s)."
 echo "    Progress: bash ${SHOW_DIR}/status.sh"
 echo "    Logs:     ${SHOW_DIR}/logs/whisper_sweep_${job_id}_<task>.log"
+echo "    Queue:    ${SLURM_ACCOUNT} on ${SLURM_PARTITION} (${SLURM_GRES#gpu:})"
 if [[ "$SLURM_QOS" == debug* ]]; then
     echo
     echo "    Each task stops after ${SLURM_TIME} and keeps every finished clip."

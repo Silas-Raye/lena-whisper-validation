@@ -117,6 +117,19 @@ SLURM_TIME="00:30:00"
 SLURM_CPUS="2"
 SLURM_MEM="16G"
 MAX_PARALLEL="10"   # most array tasks running at once
+
+# The ACCRE guest account's batch_gpu queue instead: RTX A6000s (48 GB), up
+# to 6 at once, no 30-minute limit, so each run finishes in one job. Use it
+# by starting submit_sweep.sh with LV_GPU=guest:
+#   LV_GPU=guest bash submit_sweep.sh
+if [ "${LV_GPU:-}" = "guest" ]; then
+    SLURM_ACCOUNT="accre_guests_acc"
+    SLURM_PARTITION="batch_gpu"
+    SLURM_QOS=""
+    SLURM_GRES="gpu:nvidia_rtx_a6000:1"
+    SLURM_TIME="06:00:00"   # a large-v2 run of 60 clips takes about 1-2 hours
+    MAX_PARALLEL="6"        # the account's limit
+fi
 # GPU nodes to keep jobs off, comma-separated. On 2026-11-04 every job sent to
 # gpu0058 found its GPU already full (another user's process holding 15 of
 # 16 GB). Empty this when ACCRE has fixed it.

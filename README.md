@@ -137,9 +137,15 @@ transcribe, plus 9 clips a second time.
 From the main pipeline's speed, a `large-v2` run on 60 clips takes a little
 over an hour of GPU time, or about three 30-minute jobs. `turbo` and
 `small.en` take a fraction of that, and the report gives each run's measured
-speed. Round 1 is 12 runs. If the lab gets a `batch_gpu` account, change
-the GPU settings in `config.sh` as it describes, and each run finishes in
-one job.
+speed. Round 1 is 12 runs. If you have the ACCRE guest account (`slurm_resources` lists
+`accre_guests_acc` under `batch_gpu`), start `submit_sweep.sh` with
+`LV_GPU=guest` instead: it uses RTX A6000s, up to 6 at once, with no
+30-minute limit, so each run finishes in one job and round 1 takes a
+couple of hours:
+
+```bash
+LV_GPU=guest bash ~/lena-whisper-validation/submit_sweep.sh
+```
 
 ### Keep the team blind
 
